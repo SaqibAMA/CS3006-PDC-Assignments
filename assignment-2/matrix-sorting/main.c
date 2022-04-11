@@ -45,7 +45,7 @@ int main()
     {
         for (int j = 0; j < cols; j++)
         {
-            matrix[i][j] = rand() % (rows * cols);
+            matrix[i][j] = rand() % 100;
         }
     }
 
@@ -124,6 +124,8 @@ void* quicksort_column(void* args)
 
     quicksort(q_params);
 
+    free(q_params);
+
     return 0;
 
 }
@@ -171,8 +173,17 @@ void* quicksort(void* args)
         r_q_params->start = (i + 1) + 1;
         r_q_params->end = end;
 
-        quicksort(l_q_params);
-        quicksort(r_q_params);
+        pthread_t left_thread;
+        pthread_t right_thread;
+
+        int left_ret = pthread_create(&left_thread, NULL, &quicksort, l_q_params);
+        int right_ret = pthread_create(&right_thread, NULL, &quicksort, r_q_params);
+
+        pthread_join(left_thread, NULL);
+        pthread_join(right_thread, NULL);
+
+        free(l_q_params);
+        free(r_q_params);
 
     }
 
