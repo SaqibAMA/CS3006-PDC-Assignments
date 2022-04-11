@@ -33,6 +33,13 @@ int main()
     printf("Enter the number of columns: ");
     scanf("%d", &cols);
 
+    // add validation for rows and columns
+    if (rows < 1 || cols < 1)
+    {
+        printf("Invalid input.\n");
+        return 0;
+    }
+
     // allocate memory for the matrix
     matrix = (int**)malloc(rows * sizeof(int*));
     for (int i = 0; i < rows; i++)
