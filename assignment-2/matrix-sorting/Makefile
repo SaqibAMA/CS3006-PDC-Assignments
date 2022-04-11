@@ -1,6 +1,6 @@
 main:
-	gcc -lpthread -o main main.c
-	./main
+	gcc -lpthread -o main.o main.c
+	./main.o
 
 clean:
-	rm -f main
+	rm -f main.o
