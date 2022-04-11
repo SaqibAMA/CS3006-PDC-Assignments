@@ -63,18 +63,17 @@ int main()
     // create threads equal to the number of rows
     pthread_t* threads = (pthread_t*)malloc(rows * sizeof(pthread_t));
     int* return_values = (int*)malloc(rows * sizeof(int));
+    struct thread_params** t_params = (struct thread_params**)malloc(rows * sizeof(struct thread_params*));
 
     for (int i = 0; i < rows; i++)
     {   
-        // TODO: address this memory leak.
-        struct thread_params* params = (struct thread_params*)malloc(sizeof(struct thread_params));
+        t_params[i] = (struct thread_params*)malloc(sizeof(struct thread_params));
+        t_params[i]->rows = rows;
+        t_params[i]->cols = cols;
+        t_params[i]->column = i;
+        t_params[i]->matrix = matrix;
 
-        params->matrix = matrix;
-        params->column = i;
-        params->rows = rows;
-        params->cols = cols;
-
-        return_values[i] = pthread_create(&threads[i], NULL, &quicksort_column, params);
+        return_values[i] = pthread_create(&threads[i], NULL, &quicksort_column, t_params[i]);
     }
 
     // wait for all threads to finish
@@ -102,6 +101,12 @@ int main()
 
     // free return values
     free(return_values);
+
+    // free t params
+    for (int i = 0; i < rows; i++)
+    {
+        free(t_params[i]);
+    }
 
     return 0;
 }
