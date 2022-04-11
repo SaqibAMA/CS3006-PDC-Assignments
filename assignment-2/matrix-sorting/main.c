@@ -154,7 +154,7 @@ void* quicksort(void* args)
 
         for (int j = start; j < end; j++)
         {
-            if (matrix[j][column] <= pivot)
+            if (matrix[j][column] > pivot)
             {
                 i++;
                 int temp = matrix[i][column];
