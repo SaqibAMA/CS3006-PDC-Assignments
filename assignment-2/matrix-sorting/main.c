@@ -115,17 +115,11 @@ void* quicksort_column(void* args)
 {
     struct thread_params* params = (struct thread_params*)args;
 
-    int** matrix = params->matrix;
-    int column = params->column;
-
-    int rows = params->rows;
-    int cols = params->cols;
-
     struct quicksort_params* q_params = (struct quicksort_params*)malloc(sizeof(struct quicksort_params));
-    q_params->matrix = matrix;
-    q_params->column = column;
+    q_params->matrix = params->matrix;
+    q_params->column = params->column;
     q_params->start = 0;
-    q_params->end = rows - 1;
+    q_params->end = (params->rows) - 1;
 
     quicksort(q_params);
 
