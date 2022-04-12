@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+pthread_mutex_t lock;   // mutex lock
+
 struct matrix
 {
     int** m;
@@ -17,10 +19,23 @@ struct row_params
     struct matrix C;
 };
 
+struct col_params
+{
+    int col;
+    int row;
+    struct matrix A;
+    struct matrix B;
+    struct matrix C;
+};
+
 void* row_wise(void* args);
+void* col_wise(void* args);
 
 int main()
 {
+
+    // mutex init
+    pthread_mutex_init(&lock, NULL);
 
     // matrix structs    
     struct matrix A;
@@ -120,8 +135,8 @@ int main()
     }
 
     // create a thread array with size of A.rows
-    pthread_t* threads = (pthread_t*)malloc(C.rows * sizeof(pthread_t));
-    struct row_params** t_params = (struct row_params**)malloc(C.rows * sizeof(struct row_params*));
+    pthread_t* threads = (pthread_t*)malloc(A.rows * sizeof(pthread_t));
+    struct row_params** t_params = (struct row_params**)malloc(A.rows * sizeof(struct row_params*));
 
     // task decomposition for matrix c
     for (int i = 0; i < C.rows; i++)
@@ -140,11 +155,28 @@ int main()
         pthread_join(threads[i], NULL);
     }
 
+    // free threads
+    free(threads);
+
     // clear t params
     for (int i = 0; i < C.rows; i++)
     {
         free(t_params[i]);
     }
+
+    // print matrix c
+    printf("Resultant Matrix C:\n");
+    for (int i = 0; i < C.rows; i++)
+    {
+        for (int j = 0; j < C.cols; j++)
+        {
+            printf("%d ", C.m[i][j]);
+        }
+        printf("\n");
+    }
+
+    // destroy mutex
+    pthread_mutex_destroy(&lock);
 
     return 0;
 }
@@ -158,7 +190,60 @@ void* row_wise(void* args)
     struct matrix C = params->C;
     int row = params->row;
 
-    printf("Thread %d started.\n", row);
+    // task decomposition
+
+    pthread_t* col_threads = (pthread_t*)malloc(B.cols * sizeof(pthread_t));
+    struct col_params** c_params = (struct col_params**)malloc(B.cols * sizeof(struct col_params*));
+    for (int i = 0; i < B.cols; i++)
+    {
+        c_params[i] = (struct col_params*)malloc(sizeof(struct col_params));
+        c_params[i]->A = A;
+        c_params[i]->B = B;
+        c_params[i]->C = C;
+        c_params[i]->row = row;
+        c_params[i]->col = i;
+
+        pthread_create(&col_threads[i], NULL, &col_wise, c_params[i]);
+    }
+
+    // join all threads
+    for (int i = 0; i < B.cols; i++)
+    {
+        pthread_join(col_threads[i], NULL);
+    }
+
+    // free threads
+    free(col_threads);
+
+    // free col params
+    for (int i = 0; i < B.cols; i++)
+    {
+        free(c_params[i]);
+    }
+
 
     return NULL;
+}
+
+void* col_wise(void* args)
+{
+    struct col_params* params = (struct col_params*)args;
+    struct matrix A = params->A;
+    struct matrix B = params->B;
+    struct matrix C = params->C;
+    int row = params->row;
+    int col = params->col;
+
+    // data decomposition
+    for (int i = 0; i < A.cols; i++)
+    {
+        // critical section -- start
+        pthread_mutex_lock(&lock);
+        C.m[row][col] += A.m[row][i] * B.m[i][col];
+        pthread_mutex_unlock(&lock);
+        // critical section -- end
+    }
+
+    return NULL;
+
 }
