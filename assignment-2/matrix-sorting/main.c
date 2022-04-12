@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-void* quicksort_row(void* args);
-void* quicksort(void* args);
+void* quicksort_row(void* args);        // main thread function
+void* quicksort(void* args);            // sub-thread callback
+
+
+// thread parameter structures used for passing data to the threads
 
 struct thread_params
 {
@@ -128,6 +131,7 @@ void* quicksort_row(void* args)
 {
     struct thread_params* params = (struct thread_params*)args;
 
+    // extract args
     struct quicksort_params* q_params = (struct quicksort_params*)malloc(sizeof(struct quicksort_params));
     q_params->matrix = params->matrix;
     q_params->row = params->row;
@@ -135,23 +139,29 @@ void* quicksort_row(void* args)
     q_params->end = (params->rows) - 1;
     q_params->sum = 0;
 
+    // send quicksort call for a single row
     quicksort(q_params);
 
+    // the sum is changed by reference in the quicksort function
     int row_sum = q_params->sum;
     free(q_params);
 
+    // return the sum
     return row_sum;
 }
 
 void* quicksort(void* args)
 {
 
+    // extract args
     struct quicksort_params* params = (struct quicksort_params*)args;
     int** matrix = params->matrix;
     int start = params->start;
     int end = params->end;
     int row = params->row;
 
+
+    // quicksort algorithm
     if (start <= end)
     {
 
@@ -159,9 +169,11 @@ void* quicksort(void* args)
 
         int i = start - 1;
 
+        // row summing
         for (int j = start; j <= end; j++)
             params->sum += matrix[row][j];
 
+        // partitioning
         for (int j = start; j < end; j++)
         {            
             if (matrix[row][j] > pivot)
@@ -195,6 +207,9 @@ void* quicksort(void* args)
         pthread_t left_thread;
         pthread_t right_thread;
 
+
+        // recurse on left and right halves
+        // multilthreaded version
         int left_ret = pthread_create(&left_thread, NULL, &quicksort, l_q_params);
         int right_ret = pthread_create(&right_thread, NULL, &quicksort, r_q_params);
 
