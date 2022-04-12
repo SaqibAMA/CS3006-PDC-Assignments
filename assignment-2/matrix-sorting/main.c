@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-void* quicksort_column(void* args);
+void* quicksort_row(void* args);
 void* quicksort(void* args);
 
 struct thread_params
 {
     int rows;
     int cols;
-    int column;
+    int row;
     int** matrix;
 };
 
@@ -17,7 +17,8 @@ struct quicksort_params
 {
     int start;
     int end;
-    int column;
+    int row;
+    int sum;
     int** matrix;
 };
 
@@ -77,16 +78,18 @@ int main()
         t_params[i] = (struct thread_params*)malloc(sizeof(struct thread_params));
         t_params[i]->rows = rows;
         t_params[i]->cols = cols;
-        t_params[i]->column = i;
+        t_params[i]->row = i;
         t_params[i]->matrix = matrix;
 
-        return_values[i] = pthread_create(&threads[i], NULL, &quicksort_column, t_params[i]);
+        pthread_create(&threads[i], NULL, &quicksort_row, t_params[i]);
     }
 
     // wait for all threads to finish
+    int total_sum = 0;
     for (int i = 0; i < rows; i++)
     {
-        pthread_join(threads[i], NULL);
+        pthread_join(threads[i], &return_values[i]);
+        total_sum += return_values[i];
     }
 
     // Matrix
@@ -99,6 +102,9 @@ int main()
         }
         printf("\n");
     }
+
+    // print total sum
+    printf("\nTotal sum: %d\n", total_sum);
 
     // free the matrix
     for (int i = 0; i < rows; i++)
@@ -118,22 +124,23 @@ int main()
     return 0;
 }
 
-void* quicksort_column(void* args)
+void* quicksort_row(void* args)
 {
     struct thread_params* params = (struct thread_params*)args;
 
     struct quicksort_params* q_params = (struct quicksort_params*)malloc(sizeof(struct quicksort_params));
     q_params->matrix = params->matrix;
-    q_params->column = params->column;
+    q_params->row = params->row;
     q_params->start = 0;
     q_params->end = (params->rows) - 1;
+    q_params->sum = 0;
 
     quicksort(q_params);
 
+    int row_sum = q_params->sum;
     free(q_params);
 
-    return 0;
-
+    return row_sum;
 }
 
 void* quicksort(void* args)
@@ -143,41 +150,47 @@ void* quicksort(void* args)
     int** matrix = params->matrix;
     int start = params->start;
     int end = params->end;
-    int column = params->column;
+    int row = params->row;
 
-    if (start < end)
+    if (start <= end)
     {
 
-        int pivot = matrix[end][column];
+        int pivot = matrix[row][end];
 
         int i = start - 1;
 
+        for (int j = start; j <= end; j++)
+            params->sum += matrix[row][j];
+
         for (int j = start; j < end; j++)
-        {
-            if (matrix[j][column] > pivot)
+        {            
+            if (matrix[row][j] > pivot)
             {
                 i++;
-                int temp = matrix[i][column];
-                matrix[i][column] = matrix[j][column];
-                matrix[j][column] = temp;
+                int temp = matrix[row][i];
+                matrix[row][i] = matrix[row][j];
+                matrix[row][j] = temp;
             }
         }
 
-        int temp = matrix[i + 1][column];
-        matrix[i + 1][column] = matrix[end][column];
-        matrix[end][column] = temp;
+        int temp = matrix[row][i + 1];
+        matrix[row][i + 1] = matrix[row][end];
+        matrix[row][end] = temp;
 
         struct quicksort_params* l_q_params = (struct quicksort_params*)malloc(sizeof(struct quicksort_params));
         l_q_params->matrix = matrix;
-        l_q_params->column = column;
+        l_q_params->row = row;
         l_q_params->start = 0;
         l_q_params->end = (i + 1) - 1;
+        l_q_params->sum = 0;
 
         struct quicksort_params* r_q_params = (struct quicksort_params*)malloc(sizeof(struct quicksort_params));
         r_q_params->matrix = matrix;
-        r_q_params->column = column;
+        r_q_params->row = row;
         r_q_params->start = (i + 1) + 1;
         r_q_params->end = end;
+        r_q_params->sum = 0;
+
 
         pthread_t left_thread;
         pthread_t right_thread;
@@ -187,9 +200,6 @@ void* quicksort(void* args)
 
         pthread_join(left_thread, NULL);
         pthread_join(right_thread, NULL);
-
-        free(l_q_params);
-        free(r_q_params);
 
     }
 
