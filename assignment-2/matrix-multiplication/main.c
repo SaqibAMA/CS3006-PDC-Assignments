@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <time.h>
 
 pthread_mutex_t lock;   // mutex lock
 
@@ -134,6 +135,9 @@ int main()
         printf("\n");
     }
 
+    // starting to calculate time
+    clock_t start = clock();
+
     // create a thread array with size of A.rows
     pthread_t* threads = (pthread_t*)malloc(A.rows * sizeof(pthread_t));
     struct row_params** t_params = (struct row_params**)malloc(A.rows * sizeof(struct row_params*));
@@ -157,6 +161,10 @@ int main()
 
     // free threads
     free(threads);
+
+    // calculate the total time taken
+    clock_t end = clock();
+    printf("Total time taken: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 
     // clear t params
     for (int i = 0; i < C.rows; i++)
