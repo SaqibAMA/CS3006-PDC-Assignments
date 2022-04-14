@@ -164,7 +164,6 @@ int main()
 
     // calculate the total time taken
     clock_t end = clock();
-    printf("Total time taken: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 
     // clear t params
     for (int i = 0; i < C.rows; i++)
@@ -185,6 +184,9 @@ int main()
 
     // destroy mutex
     pthread_mutex_destroy(&lock);
+
+    // print total time
+    printf("Total time taken: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 
     return 0;
 }
