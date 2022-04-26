@@ -1,10 +1,6 @@
 target:
 	/opt/homebrew/opt/gcc/bin/gcc-11 -fopenmp main.c -o main
-	./main
-
-test-stdout-100:
-	/opt/homebrew/opt/gcc/bin/gcc-11 -fopenmp main.c -o main
-	./main 10 100 out/testfile-100.txt
+	./main 8 10000000 out/testfile-1.txt
 
 clean:
 	rm -f main

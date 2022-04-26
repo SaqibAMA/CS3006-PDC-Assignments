@@ -1,83 +1,94 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #include <omp.h>
 
-int main(int argc, char** argv)
+int main(int argc, char *argv[])
 {
 
-    // p: number of threads
-    // n: number of primes to check
-    // file: file to write primes to
+    // argument format: <numProcs: p> <problemSize: n> <filename: f>
 
-    // check command line args
+    // check number of arguments
     if (argc != 4)
     {
-        printf("Usage: ./main <p> <n> <file|stdout>\n");
+        printf("Error: incorrect number of arguments\n");
         return 1;
     }
 
-    // get command line args
-    int p = atoi(argv[1]);
-    int n = atoi(argv[2]);
+    // get number of procs
+    int numProcs = atoi(argv[1]);
+
+    // get size of problem
+    int problemSize = atoi(argv[2]);
+
+    // get filename
     char* filename = argv[3];
-    int console_out = 0;
 
-    // check if filename is stdout
-    if (strcmp(filename, "stdout") == 0)
+    // check if num procs valid
+    if (numProcs < 1)
     {
-        console_out = 1;
-    }
-    else {
-        // open file and clean it
-        FILE* file = fopen(filename, "w");
-        fclose(file);
+        printf("Error: number of procs must be greater than 0\n");
+        return 1;
     }
 
-    // set nested
-    omp_set_nested(1);
-
-    // fill a boolean array of all primes
-    int* primes = malloc(sizeof(int) * n);
-    memset(primes, 1, sizeof(int) * n);
-
-    // core algorithm
-    #pragma omp parallel for num_threads(p)
-    for (int i = 3; i < n; i++)
+    // check if problem size valid
+    if (problemSize < 1)
     {
-        #pragma omp parallel for num_threads(p) shared(primes)
-        for (int j = 2; j < i; j++)
+        printf("Error: problem size must be greater than 0\n");
+        return 1;
+    }
+
+    // flags array
+    int *hasFactor = (int *)malloc(problemSize * sizeof(int));
+    memset(hasFactor, 0, problemSize * sizeof(int));
+
+    // ---- SEQUENTIAL ----
+
+    double seq_start = omp_get_wtime();
+
+    // sequential loop -- just for benchmarking
+    for (int i = 3; i < problemSize; i += 2)
+        for (int j = 3; j <= (int) sqrt(i); j++)
+            if (i % j == 0) hasFactor[i] = 1;
+
+    printf("Sequential time: %lf\n", omp_get_wtime() - seq_start);
+    memset(hasFactor, 0, problemSize * sizeof(int));
+
+    // ---- SEQUENTIAL END ----
+    
+
+    // ---- PARALLEL ----
+
+    double par_start = omp_get_wtime();
+    
+    // parallel loop
+    #pragma omp parallel for num_threads(numProcs)
+    for (int i = 3; i < problemSize; i += 2)
+        #pragma omp parallel for num_threads(numProcs)
+        for (int j = 3; j <= (int)sqrt(i); j++)
+            if (i % j == 0) hasFactor[i] = 1;
+
+    printf("Parallel time: %lf\n", omp_get_wtime() - par_start);
+
+    int console_out = (strcmp(filename, "stdout") == 0);
+
+    for (int i = 3; i < problemSize; i += 2)
+    {
+        if (!hasFactor[i])
         {
-            if (i % j == 0)
-            {
-                #pragma omp critical
-                {
-                    primes[i - 3] = 0;
-                }
-            }
-        }
-    }
-
-    // write primes to file if console_out is 0
-    for (int i = 3; i < n; i++)
-    {
-        // printf("%d\n", primes[i - 3]);
-        if (primes[i - 3] != 0)
-        {
-            if (console_out == 0)
-            {
-                FILE* file = fopen(filename, "a");
-                fprintf(file, "%d\n", i + 3);
-                fclose(file);
+            if (console_out) {
+                printf("%d\n", i);
             }
             else {
-                printf("%d\n", i + 3);
+                FILE* fp = (FILE*) fopen(filename, "a");
+                fprintf(fp, "%d\n", i);
+                fclose(fp);
             }
         }
     }
 
-    // free memory
-    free(primes);
+    free(hasFactor);
 
     return 0;
 }
