@@ -72,8 +72,6 @@ int main(int argc, char *argv[])
 
     printf("Parallel time: %lf\n", omp_get_wtime() - par_start);
 
-    return 0;
-
     int console_out = (strcmp(filename, "stdout") == 0);
 
     for (int i = 3; i < problemSize; i += 2)
