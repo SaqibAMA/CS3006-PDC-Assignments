@@ -45,15 +45,15 @@ int main(int argc, char *argv[])
 
     // ---- SEQUENTIAL ----
 
-    double seq_start = omp_get_wtime();
+    // double seq_start = omp_get_wtime();
 
-    // sequential loop -- just for benchmarking
-    for (int i = 3; i < problemSize; i += 2)
-        for (int j = 3; j <= (int) sqrt(i); j++)
-            if (i % j == 0) hasFactor[i] = 1;
+    // // sequential loop -- just for benchmarking
+    // for (int i = 3; i < problemSize; i += 2)
+    //     for (int j = 3; j <= (int) sqrt(i); j++)
+    //         if (i % j == 0) hasFactor[i] = 1;
 
-    printf("Sequential time: %lf\n", omp_get_wtime() - seq_start);
-    memset(hasFactor, 0, problemSize * sizeof(int));
+    // printf("Sequential time: %lf\n", omp_get_wtime() - seq_start);
+    // memset(hasFactor, 0, problemSize * sizeof(int));
 
     // ---- SEQUENTIAL END ----
     
@@ -61,15 +61,18 @@ int main(int argc, char *argv[])
     // ---- PARALLEL ----
 
     double par_start = omp_get_wtime();
-    
+
     // parallel loop
     #pragma omp parallel for num_threads(numProcs)
-    for (int i = 3; i < problemSize; i += 2)
-        #pragma omp parallel for num_threads(numProcs)
-        for (int j = 3; j <= (int)sqrt(i); j++)
+    for (int i = 3; i < problemSize; i += 2) {
+        int upper_bound = (int) sqrt(i);
+        for (int j = 3; j <= upper_bound; j += 2)
             if (i % j == 0) hasFactor[i] = 1;
+    }
 
     printf("Parallel time: %lf\n", omp_get_wtime() - par_start);
+
+    return 0;
 
     int console_out = (strcmp(filename, "stdout") == 0);
 
