@@ -76,6 +76,8 @@ int main()
     int sum_value = 0;
     struct thread_params** t_params = (struct thread_params**)malloc(rows * sizeof(struct thread_params*));
 
+    double timer_state = omp_get_wtime();
+
     #pragma omp parallel num_threads(rows) reduction(+:sum_value)
     {   
         int thread_id = omp_get_thread_num();
@@ -88,6 +90,8 @@ int main()
 
         sum_value += (int) quicksort_row(t_params[thread_id]);
     }
+
+    printf("\nTotal time taken: %lf\n", omp_get_wtime() - timer_state);
 
     // Matrix
     printf("\nMatrix after sorting:\n");
@@ -161,10 +165,12 @@ void* quicksort(void* args)
         int i = start - 1;
 
         // row summing
+        #pragma omp parallel for
         for (int j = start; j <= end; j++)
             params->sum += matrix[row][j];
 
         // partitioning
+        #pragma omp parallel for
         for (int j = start; j < end; j++)
         {            
             if (matrix[row][j] > pivot)
@@ -194,9 +200,14 @@ void* quicksort(void* args)
         r_q_params->end = end;
         r_q_params->sum = 0;
 
-        #pragma omp parallel num_threads(2)
+        #pragma omp task
         {
-            quicksort(omp_get_thread_num() == 0 ? l_q_params : r_q_params);
+            quicksort(l_q_params);
+        }
+
+        #pragma omp task
+        {
+            quicksort(r_q_params);
         }
 
     }
