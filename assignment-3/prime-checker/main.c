@@ -45,15 +45,17 @@ int main(int argc, char *argv[])
 
     // ---- SEQUENTIAL ----
 
-    // double seq_start = omp_get_wtime();
+    double seq_start = omp_get_wtime();
+    double seq_time;
 
-    // // sequential loop -- just for benchmarking
-    // for (int i = 3; i < problemSize; i += 2)
-    //     for (int j = 3; j <= (int) sqrt(i); j++)
-    //         if (i % j == 0) hasFactor[i] = 1;
+    // sequential loop -- just for benchmarking
+    for (int i = 3; i < problemSize; i += 2)
+        for (int j = 3; j <= (int) sqrt(i); j++)
+            if (i % j == 0) hasFactor[i] = 1;
 
-    // printf("Sequential time: %lf\n", omp_get_wtime() - seq_start);
-    // memset(hasFactor, 0, problemSize * sizeof(int));
+    printf("Sequential time: %lf\n", omp_get_wtime() - seq_start);
+    seq_time = omp_get_wtime() - seq_start;
+    memset(hasFactor, 0, problemSize * sizeof(int));
 
     // ---- SEQUENTIAL END ----
     
@@ -71,6 +73,7 @@ int main(int argc, char *argv[])
     }
 
     printf("Parallel time: %lf\n", omp_get_wtime() - par_start);
+    printf("Speedup: %lf\n", seq_time / (omp_get_wtime() - par_start));
 
     int console_out = (strcmp(filename, "stdout") == 0);
 
