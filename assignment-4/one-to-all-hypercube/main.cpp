@@ -8,7 +8,11 @@ using namespace std;
 class node {
     public:
         int id;
-        vector<int> data;
+        int data;
+
+    node() {
+        data = NULL;
+    }
 };
 
 int main() {
@@ -28,7 +32,7 @@ int main() {
     }
 
     // putting data at 0th node
-    nodes[0].data.push_back(25);
+    nodes[0].data = 25;
     for (int i = dimension - 1; i >= 0; i--) {
         int mask = (1 << i);
 
@@ -38,7 +42,7 @@ int main() {
             int current_node = nodes[j].id;
             int neighbour_node = current_node ^ mask;
 
-            if (nodes[current_node].data.empty() && nodes[neighbour_node].data.empty()) {
+            if (nodes[current_node].data == NULL && nodes[neighbour_node].data == NULL) {
                 continue;
             }
 
@@ -50,20 +54,9 @@ int main() {
             else {
                 cout << "Node: [" << current_node << "] is sending data to [" << neighbour_node << "]" << endl;
             }
+            
+            nodes[neighbour_node].data = nodes[current_node].data;
 
-            // print the data being transferred
-            cout << "\n\t\tData: ";
-            for (int k = 0; k < nodes[current_node].data.size(); k++) {
-                cout << nodes[current_node].data[k] << " ";
-            }
-            cout << "\n\n";
-
-            // merge data from both nodes
-            vector <int> merged_data = nodes[current_node].data;
-            merged_data.insert(merged_data.end(), nodes[neighbour_node].data.begin(), nodes[neighbour_node].data.end());
-
-            nodes[current_node].data = merged_data;
-            nodes[neighbour_node].data = merged_data;
         }
         cout << "============================## STEP ##============================\n\n\n";
 
@@ -74,11 +67,7 @@ int main() {
     cout << "Final state of the network: " << endl;
     // print all nodes with their data
     for (int i = 0; i < nodes.size(); i++) {
-        cout << "Node: " << nodes[i].id << " has data: [ ";
-        for (int j = 0; j < nodes[i].data.size(); j++) {
-            cout << nodes[i].data[j] << " ";
-        }
-        cout << " ]\n";
+        cout << "Node: " << nodes[i].id << " has data: [ " << nodes[i].data << " ]" << endl;
     }
 
 
